@@ -206,6 +206,7 @@
       ['受众', brief.audience], ['承接动作', brief.action], ['效果监测', plan.strategy.measure],
       ['执行预留（元）', plan.reserve], ['计价范围', '发布、制作与执行预留按本方案口径列示，税费及实际施工费用以最终确认口径为准'],
       ['公交参考', '01 公交媒体台账（2026-11-13 单日）'], ['刊例口径', '07 媒体刊例价（脱敏区间）'],
+      ['提案团队', '星空队'], ['出题方', '上海新云传媒'],
     ];
     for (const [label, url] of brief.sources) summary.push([label, url]);
     XLSX.utils.book_append_sheet(file, sheet(summary, [30, 79]), '方案摘要');

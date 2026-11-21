@@ -321,7 +321,7 @@
       renderQuote(plan);
       renderOutcomes(plan);
       renderAudit(plan);
-      $('footer').innerHTML = '<span>上海新云传媒 · 户外媒体提案</span><a href="https://images.unsplash.com/photo-1545893835-abaa50cbe628" target="_blank" rel="noopener">上海封面影像 · Unsplash ↗</a>';
+      $('footer').innerHTML = '<span>星空队 · 户外媒体提案</span><a href="https://images.unsplash.com/photo-1545893835-abaa50cbe628" target="_blank" rel="noopener">上海封面影像 · Unsplash ↗</a>';
       requestAnimationFrame(paintMap);
     } catch (error) {
       view.plan = null;
@@ -462,6 +462,7 @@
     }));
     const header = document.querySelector('.header').cloneNode(true);
     header.querySelector('.top-actions').remove();
+    header.querySelector('.brand-lockup small').textContent = '户外媒体提案';
     const html = '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'
       + esc(plan.brief.name) + ' · 上海户外投放提案</title><style>' + $('app-style').textContent + '</style><body class="client">'
       + header.outerHTML + '<main class="frame page" id="top">' + clone.outerHTML + '</main><script>(' + clientInteractions.toString() + ')();</' + 'script></body></html>';
@@ -475,7 +476,7 @@
       + 'main{max-width:180mm;margin:24px auto;padding:0 14px}h1{font-size:30px;margin:0 0 2px}p{margin:0 0 14px;color:#52637a}dl{display:grid;grid-template-columns:8.75em 1fr}'
       + 'dt,dd{border-bottom:1px solid #e1e7ef;margin:0;padding:10px 9px}dt{color:#1747b6;font-weight:700;background:#f1f5ff}button{border:1px solid #dce5f4;border-radius:6px;background:#fff;padding:6px 12px;cursor:pointer}'
       + '@media(max-width:480px){dl{grid-template-columns:1fr}dt{padding-bottom:4px}dd{padding-top:6px}}@media print{main{margin:0;padding:0}button{display:none}dt{print-color-adjust:exact}}'
-      + '</style></head><body><main><h1>' + title + '</h1><p>上海新云传媒 · ' + esc(plan.brief.name) + '上海户外投放提案</p><dl>'
+      + '</style></head><body><main><h1>' + title + '</h1><p>星空队 · ' + esc(plan.brief.name) + '上海户外投放提案</p><dl>'
       + fields(assumptionRows(plan)) + '</dl><button type="button" onclick="print()">打印或另存为 PDF</button></main></body></html>';
     F.download(html, plan.brief.name + '_Campaign假设书.html', 'text/html;charset=utf-8');
     toast('已生成 Campaign 假设书');
