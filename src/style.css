@@ -72,8 +72,8 @@ select { padding-right: 22px; }
 .hero-kicker { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 11px; color: #ffe0ba; font-size: 12px; font-weight: 770; margin-bottom: 12px; }
 #hero-kicker { color: #ccdaeb; font-size: 10px; letter-spacing: .14em; }
 #hero-kicker::before { content: "/"; color: #8fa4be; padding-right: 11px; }
-.hero h2 { max-width: 11em; font-size: clamp(31px, 4.1vw, 63px); font-weight: 830; letter-spacing: -.045em; line-height: 1.13; text-wrap: balance; }
-.hero h2 span { white-space: nowrap; }
+.hero :is(h1,h2) { max-width: 11em; font-size: clamp(31px, 4.1vw, 63px); font-weight: 830; letter-spacing: -.045em; line-height: 1.13; text-wrap: balance; }
+.hero :is(h1,h2) span { white-space: nowrap; }
 .hero-lede { color: #e2ebf8; margin-top: 16px; max-width: 31em; font-size: 14px; line-height: 1.72; }
 .hero-meta { display: flex; align-items: center; gap: 7px 12px; margin-top: 15px; font-size: 12px; color: #ccdaec; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
 .hero-meta span + span::before { content: "·"; margin-right: 12px; color: #a3b7d5; }

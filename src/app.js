@@ -82,7 +82,7 @@
     return [
       ['客户与品牌', brief.industry + ' · ' + brief.name + '。' + brief.scale],
       ['生意目标', strategy.business],
-      ['Campaign 主目标', strategy.goal + '。' + brief.title + '。'],
+      ['投放主目标', strategy.goal + '。' + brief.title + '。'],
       ['目标人群', brief.audience + ' 重点场景包括' + zones.map(zone => zone.name).join('、') + '。'],
       ['时间与预算', options.start + ' 至 ' + options.end + '，预算 ' + money(options.budget) + '。'],
       ['媒体范围', mediaScope + hierarchy + '。'],
@@ -91,7 +91,7 @@
   }
 
   function renderAssumption(plan) {
-    $('assumption').innerHTML = '<div class="assumption-aim"><span>本次主目标</span><strong>' + esc(plan.strategy.goal)
+    $('assumption').innerHTML = '<div class="assumption-aim"><span>投放主目标</span><strong>' + esc(plan.strategy.goal)
       + '</strong><p>' + esc(plan.strategy.business) + '</p></div><dl>' + fields(assumptionRows(plan)) + '</dl>';
   }
 
@@ -169,7 +169,7 @@
         ['转化动作', plan.strategy.goal === brief.goal ? brief.action : plan.strategy.target],
         ...options.types.map(type => [P.media[type], brief[type === 'bus' ? 'bus' : 'metro']])]
         .map(([label, body]) => '<dt>' + esc(label) + '</dt><dd>' + esc(body) + '</dd>').join('')
-      + '</dl>';
+      + '</dl><p class="source-links">' + brief.sources.map(([label, link]) => '<a target="_blank" rel="noopener" href="' + esc(link) + '">' + esc(label) + ' ↗</a>').join('') + '</p>';
     $('map-pins').innerHTML = zones.map(zone => '<button class="pin' + (zone.xy[0] >= 44 ? ' left' : '') + '" type="button" data-zone="' + zone.id
       + '" data-name="' + esc(zone.name) + '" aria-label="' + esc(zone.name) + '" aria-pressed="' + (view.zone === zone.id) + '" style="left:' + zone.xy[0] + '%;top:' + zone.xy[1] + '%"></button>').join('');
     $('zone-list').innerHTML = zones.map(zone => {
@@ -440,6 +440,10 @@
 
   function exportHTML(plan) {
     const clone = $('proposal').cloneNode(true);
+    const cover = clone.querySelector('#hero-title');
+    const title = Object.assign(document.createElement('h1'), { id: cover.id, innerHTML: cover.innerHTML });
+    cover.replaceWith(title);
+    clone.querySelector('#hero-brand').textContent = plan.brief.name + ' · 上海户外投放提案';
     clone.querySelector('#resource-table').innerHTML = tableMarkup(plan.rows) + '<p id="client-empty" class="empty">当前筛选无匹配资源。</p>';
     for (const button of clone.querySelectorAll('#resource-table [data-resource]')) {
       const row = plan.rows.find(item => item.key === button.dataset.resource);
@@ -459,7 +463,7 @@
     const header = document.querySelector('.header').cloneNode(true);
     header.querySelector('.top-actions').remove();
     const html = '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>'
-      + esc(plan.brief.name) + ' · 上海户外投放方案</title><style>' + $('app-style').textContent + '</style><body class="client">'
+      + esc(plan.brief.name) + ' · 上海户外投放提案</title><style>' + $('app-style').textContent + '</style><body class="client">'
       + header.outerHTML + '<main class="frame page" id="top">' + clone.outerHTML + '</main><script>(' + clientInteractions.toString() + ')();</' + 'script></body></html>';
     F.download(html, outName(plan) + '.html', 'text/html;charset=utf-8');
   }
@@ -471,7 +475,7 @@
       + 'main{max-width:180mm;margin:24px auto;padding:0 14px}h1{font-size:30px;margin:0 0 2px}p{margin:0 0 14px;color:#52637a}dl{display:grid;grid-template-columns:8.75em 1fr}'
       + 'dt,dd{border-bottom:1px solid #e1e7ef;margin:0;padding:10px 9px}dt{color:#1747b6;font-weight:700;background:#f1f5ff}button{border:1px solid #dce5f4;border-radius:6px;background:#fff;padding:6px 12px;cursor:pointer}'
       + '@media(max-width:480px){dl{grid-template-columns:1fr}dt{padding-bottom:4px}dd{padding-top:6px}}@media print{main{margin:0;padding:0}button{display:none}dt{print-color-adjust:exact}}'
-      + '</style></head><body><main><h1>' + title + '</h1><p>上海新云传媒 · ' + esc(plan.brief.name) + ' · 脱敏演示案例</p><dl>'
+      + '</style></head><body><main><h1>' + title + '</h1><p>上海新云传媒 · ' + esc(plan.brief.name) + '上海户外投放提案</p><dl>'
       + fields(assumptionRows(plan)) + '</dl><button type="button" onclick="print()">打印或另存为 PDF</button></main></body></html>';
     F.download(html, plan.brief.name + '_Campaign假设书.html', 'text/html;charset=utf-8');
     toast('已生成 Campaign 假设书');

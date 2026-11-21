@@ -51,6 +51,8 @@ test('brief classification extracts explicit inputs and leaves ambiguous fields 
   assert.equal(brief.budget, 2000000);
   assert.deepEqual(brief.types, ['bus', 'metro']);
   assert.deepEqual(brief.period, ['2027-06-01', '2027-06-30']);
+  assert.equal(XinyunCampaign.fromText('星巴克，主目标到店').brief, 'food');
+  assert.equal(XinyunCampaign.fromText('比较星巴克或招行').brief, undefined);
   const ambiguous = XinyunCampaign.fromText('100万或500万，公交不投，日期2027-02-29至2027-03-01');
   assert.equal(ambiguous.budget, undefined);
   assert.deepEqual(ambiguous.types, []);

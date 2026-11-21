@@ -207,6 +207,7 @@
       ['执行预留（元）', plan.reserve], ['计价范围', '发布、制作与执行预留按本方案口径列示，税费及实际施工费用以最终确认口径为准'],
       ['公交参考', '01 公交媒体台账（2026-11-13 单日）'], ['刊例口径', '07 媒体刊例价（脱敏区间）'],
     ];
+    for (const [label, url] of brief.sources) summary.push([label, url]);
     XLSX.utils.book_append_sheet(file, sheet(summary, [30, 79]), '方案摘要');
     const details = planRows(plan).map((row, index) => index ? row.map((value, col) => [8, 9, 25, 29, 30].includes(col) && value ? new Date(value) : value) : row);
     const detailSheet = sheet(details, details[0].map((_, index) => [3, 22, 23, 24, 26, 31].includes(index) ? 30 : 18));

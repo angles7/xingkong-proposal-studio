@@ -1,6 +1,6 @@
 (() => {
   const anchors = {
-    roastery: ['南京西路旗舰门店', '南京西路商圈', '旗舰到店', 500, 5, [44,39], '南京西路', '20 23 37 41 104 109 112 136 206 301 304 738 927'],
+    roastery: ['上海烘焙工坊', '南京西路789号', '旗舰到店', 500, 5, [44,39], '南京西路', '20 23 37 41 104 109 112 136 206 301 304 738 927'],
     jingan: ['静安寺商圈', '南京西路 × 华山路', '商务与周末客流', 500, 4, [30,51], '静安寺', '15 20 40 45 57 76 93 94 113 323 327 830 824 927 939'],
     square: ['人民广场商圈', '人民广场 × 南京东路步行街', '游客与地铁换乘', 500, 3, [54,30], '人民广场', '17 18 20 23 37 46 49 64 109 112 123 145 167 312 537 930 952 980'],
     xintiandi: ['新天地商圈', '兴业路 × 马当路', '步行休闲客流', 500, 3, [52,59], '一大会址·新天地', '17 24 36 42 109 146 304 781 911 926 932 986'],
@@ -8,11 +8,11 @@
     avenue: ['世纪大道商圈', '世纪大道 × 东方路', '商务与多线换乘', 500, 4, [79,54], '世纪大道', '130 169 181 219 451 583 597 608 610 639 746 775 779 785 790 792 870 871 980 浦东4路'],
     xujiahui: ['徐家汇商圈', '漕溪北路 × 肇嘉浜路', '办公与成熟社区', 600, 4, [27,74], '徐家汇', '15 42 43 44 50 72 93 171 205 218 303 572 732 824 836 926 958'],
     wujiaochang: ['五角场商圈', '邯郸路 × 淞沪路', '家庭消费与社区', 600, 3, [76,15], '五角场', '55 59 60 90 99 133 139 168 187 307 405 406 453 537 559 713 749 819 842 854 942'],
-    pharmacy: ['南京东路保健品门店', '南京东路步行街', '旗舰到店咨询', 450, 5, [58,24], '南京东路', '20 37 49 64 66 123 167 220 306 307 316 330 805 929 930'],
+    pharmacy: ['第一医药商店', '南京东路616号', '旗舰到店咨询', 450, 5, [58,24], '南京东路', '20 37 49 64 66 123 167 220 306 307 316 330 805 929 930'],
     changning: ['长宁院区', '长宁区仙霞路片区', '家庭就诊与体检', 700, 5, [13,65], '北新泾', '54 74 88 91 121 141 190 316 807 808 825 836 846 855 856 876'],
     pudong: ['浦东院区', '浦东新区金桥片区', '园区职员与周边家庭', 800, 5, [90,41], '金桥', '573 777 790 803 1032 1045 1058 1103 1130 申川专线 浦东17路 浦东27路'],
     hongqiao: ['虹桥商务区', '申长路 × 甬虹路', '跨区办公与就医接驳', 650, 3, [9,49], '虹桥火车站', '173 189 320 330 316 803 941 虹桥枢纽1路 虹桥枢纽4路 虹桥枢纽5路'],
-    disney: ['乐园零售入口', '浦东国际旅游度假区', '目的地到访', 800, 5, [88,84], '迪士尼', '浦东50路 浦东51路 浦东52路 度假区1路 度假区2路 度假区3路'],
+    disney: ['迪士尼世界商店', '上海迪士尼度假区 · 迪士尼小镇', '目的地到访', 800, 5, [88,84], '迪士尼', '浦东50路 浦东51路 浦东52路 度假区1路 度假区2路 度假区3路'],
     chuansha: ['川沙商圈', '川沙路 × 川环南路', '亲子社区与酒店接驳', 650, 4, [92,70], '川沙', '182 188 615 628 632 991 993 浦东3路 浦东13路 浦东17路 浦东28路 浦东39路 浦东41路 浦东46路'],
     luoshan: ['罗山路换乘枢纽', '轨交11号线 / 16号线', '亲子出行换乘', 650, 4, [73,76], '罗山路', '581 624 632 988 1020 1051 1106 浦东12路 浦东25路 周康1路 周康6路'],
     longyang: ['龙阳路交通枢纽', '龙阳路 × 白杨路', '跨区客流与周末换乘', 650, 3, [79,64], '龙阳路', '581 629 746 798 976 989 1013 1023 浦东11路 浦东28路 浦东50路'],
@@ -20,7 +20,7 @@
   };
   const briefs = [
     {
-      id: 'bank', industry: '银行保险', name: '全国性银行 A 上海分行', english: 'BANKING',
+      id: 'bank', industry: '银行保险', name: '招商银行', alias: '招行', english: 'CHINA MERCHANTS BANK',
       business: '让正在选择服务机构的通勤客群主动预约附近网点，增加有效咨询线索。',
       goal: '拉新', scale: '全国性商业银行。上海设分行及多个线下网点。',
       title: '把网点服务带到通勤路上', season: '企业服务与网点咨询', subwayShare: .50,
@@ -32,9 +32,10 @@
       bus: '用车身连接商务楼宇与成熟社区，重复展示网点服务主题。',
       metro: '优先办公出站方向，创意突出就近网点与预约入口。',
       zones: ['lujiazui','avenue','xujiahui','jingan'],
+      sources: [['招商银行官网','https://www.cmbchina.com/'],['网点查询','https://map.cmbchina.com/']],
     },
     {
-      id: 'food', industry: '食品饮料', name: '连锁咖啡品牌 A', english: 'COFFEE & BEVERAGE',
+      id: 'food', industry: '食品饮料', name: '星巴克', alias: 'Starbucks', english: 'STARBUCKS RESERVE',
       business: '把南京西路周边通勤和周末逛街客流转为旗舰门店到访，验证商圈投放能否带动核销。',
       goal: '到店', scale: '全国连锁咖啡品牌。上海设旗舰店及商圈门店。',
       title: '上海，下一站喝杯咖啡', titleParts: ['上海，下一站', '喝杯咖啡'], season: '初夏到店推广', subwayShare: .36,
@@ -46,9 +47,10 @@
       bus: '在南京西路及相邻商圈增加通勤中的重复曝光。',
       metro: '在核心商圈的步行出口给出最近门店与活动入口。',
       zones: ['roastery','jingan','square','xintiandi'],
+      sources: [['上海烘焙工坊官方地址','https://roastery.starbucks.com.cn/'],['星巴克中国门店查询','https://www.starbucks.com.cn/stores/']],
     },
     {
-      id: 'health', industry: '保健品', name: '保健品零售品牌 A', english: 'HEALTH RETAIL',
+      id: 'health', industry: '保健品', name: '上海第一医药', alias: '第一医药', english: 'SHANGHAI FIRST PHARMACY',
       business: '提高家庭购买者对规范选购服务的认知，增加社区客群到旗舰店咨询的机会。',
       goal: '认知', scale: '上海本地连锁零售企业。旗舰门店与社区门店可承接咨询。',
       title: '把科学选购带进社区', season: '保健食品到店咨询', subwayShare: .34,
@@ -60,9 +62,10 @@
       bus: '用成熟社区与商圈之间的公交线路反复触达家庭消费客群。',
       metro: '选从轨交到商店的步行出口，帮助有明确需求的客群到店。',
       zones: ['pharmacy','square','xujiahui','wujiaochang'],
+      sources: [['上交所 · 第一医药（600833）','https://www.sse.com.cn/assortment/stock/list/info/announcement/index.shtml?productId=600833']],
     },
     {
-      id: 'hospital', industry: '私立医院', name: '私立医疗集团 A', english: 'PRIVATE HEALTHCARE',
+      id: 'hospital', industry: '私立医院', name: '上海和睦家', alias: '和睦家', english: 'SHANGHAI UNITED FAMILY',
       business: '让院区周边家庭找到与自身需求匹配的院区和预约入口，增加有效预约。',
       goal: '拉新', scale: '跨城市私立医疗集团。上海设长宁与浦东院区。',
       title: '让家庭预约少走一步', season: '暑期家庭健康预约', subwayShare: .40,
@@ -74,9 +77,10 @@
       bus: '沿院区与社区生活通道提高本地家庭对区位的熟悉度。',
       metro: '优先医院步行圈及轨交换乘出口，强调到院路径。',
       zones: ['changning','pudong','hongqiao','avenue'],
+      sources: [['上海和睦家官方院区信息','https://shanghai.ufh.com.cn/']],
     },
     {
-      id: 'park', industry: '乐园（主题公园）', name: '大型主题乐园 A', english: 'THEME PARK',
+      id: 'park', industry: '乐园（主题公园）', name: '上海迪士尼度假区', alias: '迪士尼', english: 'SHANGHAI DISNEY RESORT',
       business: '让亲子家庭提前安排周末行程，带动活动渠道票务访问与到园。',
       goal: '到店', scale: '上海浦东大型目的地主题乐园。园区设实体零售门店。',
       title: '周末出发，下一站乐园', season: '暑期亲子游园预热', subwayShare: .54,
@@ -88,6 +92,7 @@
       bus: '把亲子活动信息带到浦东社区及度假区接驳沿线。',
       metro: '在11号线与换乘节点提示到达方式及提前规划行程。',
       zones: ['disney','chuansha','luoshan','longyang','kangqiao'],
+      sources: [['迪士尼世界商店','https://www.shanghaidisneyresort.com/zh-cn/shops/disneytown/world-of-disney-store/'],['度假区交通信息','https://www.shanghaidisneyresort.com/zh-cn/guest-services/transportation/']],
     },
   ];
   const locations = Object.fromEntries(Object.entries(anchors).map(([id, entry]) => {
@@ -95,7 +100,7 @@
     return [id, { id, name, address, purpose, radius, weight, xy, station, lines: lines.split(' ') }];
   }));
   const locationAliases = {
-    '南京西路789号': 'roastery', '静安寺': 'jingan', '上海人民广场': 'square', '人民广场': 'square', '上海新天地': 'xintiandi', '新天地': 'xintiandi',
+    '南京西路789号': 'roastery', '南京西路旗舰门店': 'roastery', '静安寺': 'jingan', '上海人民广场': 'square', '人民广场': 'square', '上海新天地': 'xintiandi', '新天地': 'xintiandi',
     '世纪大道地铁站': 'avenue', '上海徐家汇': 'xujiahui', '徐家汇': 'xujiahui', '五角场': 'wujiaochang', '陆家嘴': 'lujiazui',
     '南京东路616号': 'pharmacy', '仙霞路1139号': 'changning', '新金桥路1598号': 'pudong',
     '虹桥火车站': 'hongqiao', '迪士尼站': 'disney', '川沙地铁站': 'chuansha', '罗山路地铁站': 'luoshan',

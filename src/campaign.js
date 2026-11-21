@@ -53,6 +53,11 @@
   function fromText(value) {
     const text = value.normalize('NFKC').slice(0, 600);
     const sector = rank(text, industryWords);
+    const brands = globalThis.XinyunCatalog.briefs.flatMap(brief => {
+      const match = [brief.name, brief.alias].find(term => text.toLowerCase().includes(term.toLowerCase()));
+      return match ? [{ id: brief.id, hits: [match] }] : [];
+    });
+    const chosenSector = brands.length === 1 ? brands[0] : brands.length ? null : sector;
     const objective = rank(text, goalWords);
     const budgets = [...new Set([...text.matchAll(/(?<!\d)(100|200|500)\s*万/g)].map(match => Number(match[1]) * 10000))];
     const types = [/(公交|车身|巴士)/.test(text) && 'bus', /(地铁|轨交|出入口)/.test(text) && 'metro'].filter(Boolean);
@@ -60,9 +65,9 @@
       .map(match => '2027-' + match[1].padStart(2, '0') + '-' + match[2].padStart(2, '0'));
     const period = days.length === 2 && globalThis.XinyunPlanner.rangeOK(days[0], days[1]) ? days : null;
     const explicitGoal = text.match(/(?:主目标|核心目标)\s*(?:为|是|[:：])?\s*(认知|到店|促销|拉新)/)?.[1];
-    return { brief: sector?.id, goal: explicitGoal || objective?.id, budget: budgets.length === 1 ? budgets[0] : undefined,
+    return { brief: chosenSector?.id, goal: explicitGoal || objective?.id, budget: budgets.length === 1 ? budgets[0] : undefined,
       types: /不投|不选|排除|不要|或/.test(text) ? [] : types,
-      period, industryTerms: sector?.hits || [], goalTerms: objective?.hits || [] };
+      period, industryTerms: chosenSector?.hits || [], goalTerms: objective?.hits || [] };
   }
 
   function strategy(brief, goal) {
