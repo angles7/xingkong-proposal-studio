@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>新云传媒 · 户外提案台</title>
+  <style id="app-style">/* BUILD: CSS */</style>
+</head>
+<body>
+  <header class="header">
+    <div class="frame top">
+      <a class="brand-lockup" href="#top"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span><span>新云传媒<small>户外提案台</small></span></a>
+      <nav aria-label="方案导航" class="top-nav"><a href="#overview">方案总览</a><a href="#coverage">圈选策略</a><a href="#resources">媒介清单</a><a href="#schedule">排期与报价</a></nav>
+      <div class="top-actions"><button type="button" class="button quiet" id="data-open">数据导入</button><button type="button" class="button solid" id="export-html">导出方案 HTML</button></div>
+    </div>
+  </header>
+  <main class="frame page" id="top">
+    <section class="workspace" aria-labelledby="input-heading">
+      <div class="work-head"><div><p class="eyebrow">上海 · 2027 媒介规划</p><h1 id="input-heading">户外投放提案</h1></div>
+        <fieldset class="segments mode" aria-label="数据使用模式">
+          <label><input type="radio" name="mode" value="draft" checked><span>策略测算</span></label>
+          <label><input type="radio" name="mode" value="verified"><span>档期核验</span></label>
+        </fieldset>
+      </div>
+      <form id="brief-form" class="controls">
+        <label class="field"><span>行业与客户</span><select id="industry"></select></label>
+        <fieldset class="field"><legend>投放预算</legend><div class="segments" id="budgets">
+          <label><input type="radio" name="budget" value="1000000"><span>100 万</span></label>
+          <label><input type="radio" name="budget" value="2000000" checked><span>200 万</span></label>
+          <label><input type="radio" name="budget" value="5000000"><span>500 万</span></label>
+        </div></fieldset>
+        <fieldset class="field"><legend>媒体组合</legend><div class="segments" id="media-options">
+          <label><input type="checkbox" name="type" value="bus" checked><span>公交车身</span></label>
+          <label><input type="checkbox" name="type" value="metro" checked><span>地铁出入口</span></label>
+        </div></fieldset>
+        <fieldset class="field"><legend>投放档期</legend><div class="dates">
+          <input aria-label="开始日期" type="date" id="start" min="2027-01-01" max="2027-12-31" required><span>至</span>
+          <input aria-label="结束日期" type="date" id="end" min="2027-01-01" max="2027-12-31" required>
+        </div></fieldset>
+      </form>
+      <p id="input-error" class="feedback error" role="alert" hidden></p>
+    </section>
+
+    <div id="proposal">
+      <section id="overview" class="hero" aria-label="方案总览">
+        <div class="hero-copy">
+          <div class="hero-info"><span class="badge" id="plan-status"></span><span id="hero-date"></span></div>
+          <p class="hero-kicker" id="hero-kicker"></p>
+          <h2 id="hero-title"></h2>
+          <p class="hero-lede" id="hero-lede"></p>
+          <div class="hero-meta"><span id="hero-brand"></span><span id="hero-season"></span></div>
+        </div>
+        <div class="map" aria-label="圈选地标示意图">
+          <canvas id="map-canvas" aria-hidden="true"></canvas>
+          <div class="map-top"><b>上海投放圈选</b><span>SHANGHAI</span></div>
+          <div class="map-pins" id="map-pins"></div>
+          <div class="map-foot"><span><i></i> 计划圈选中心</span><span>位置与圈径为示意</span></div>
+        </div>
+      </section>
+      <div class="stats" id="stats" aria-label="投放方案指标"></div>
+
+      <section id="coverage" class="section">
+        <header class="section-head"><div><p class="eyebrow">受众与地标</p><h2>品牌策略与圈选</h2></div><a href="#resources" class="button quiet">查看媒介清单 ↓</a></header>
+        <div class="strategy-grid">
+          <article class="panel strategy" id="strategy"></article>
+          <article class="panel zones">
+            <div class="panel-head"><h3>选择地标查看覆盖</h3><button type="button" class="text-button interactive" id="zones-reset" hidden>清除筛选</button></div>
+            <div id="zone-list"></div><div id="zone-evidence"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="resources" class="section">
+        <header class="section-head"><div><p class="eyebrow">投放组合</p><h2>线路与点位清单</h2></div><div class="row-actions"><button type="button" class="button quiet" id="export-csv">导出 CSV</button><button type="button" class="button quiet" id="export-xlsx">导出 Excel</button></div></header>
+        <p class="notice" id="data-notice"></p>
+        <div class="panel table-panel">
+          <div class="table-toolbar">
+            <div class="tabs" role="tablist" aria-label="选择资源类型">
+              <button type="button" role="tab" data-list="all" aria-selected="true">全部资源</button>
+              <button type="button" role="tab" data-list="bus" aria-selected="false">公交车身</button>
+              <button type="button" role="tab" data-list="metro" aria-selected="false">地铁出入口</button>
+            </div>
+            <label class="table-search"><span class="sr-only">搜索线路或地标</span><input type="search" id="search" placeholder="搜索线路、点位或地标"></label>
+          </div>
+          <div class="table-wrap" id="resource-table" role="tabpanel"></div>
+          <details class="alternatives interactive" id="alternatives"><summary>替换资源与未计价清单</summary><div id="alternative-items"></div></details>
+        </div>
+      </section>
+
+      <section id="schedule" class="section">
+        <header class="section-head"><div><p class="eyebrow">排期与费用</p><h2>报价测算与执行排期</h2></div>
+          <div class="row-actions interactive">
+            <label class="compact-field"><span>刊例取值</span><select id="price-mode"><option value="mid">中值</option><option value="high">高位</option><option value="low">低位</option></select></label>
+            <label class="compact-field"><span>发布费折扣</span><input id="discount" type="number" min="1" max="100" step="1" value="100" aria-describedby="discount-unit"><span id="discount-unit">%</span></label>
+          </div>
+        </header>
+        <div class="schedule-grid"><article class="panel quote" id="quote"></article><article class="panel timeline" id="timeline"></article></div>
+        <article class="panel comparisons interactive"><div class="panel-head"><h3>预算切换对比</h3><span>同一策略、媒体和档期</span></div><div id="compares"></div></article>
+      </section>
+      <footer id="footer" class="footer"></footer>
+    </div>
+  </main>
+  <dialog id="data-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">库存与覆盖</p><h2>导入业务数据</h2></div><button type="button" class="button quiet" id="data-close">关闭</button></div>
+    <p class="dialog-lede">在红豆按完整投放档期导出媒体库存。在可视化平台按地标与半径导出覆盖分析。文件在当前浏览器解析。</p>
+    <form id="import-form" class="import-form">
+      <label class="field"><span>数据来源</span><select id="import-kind"><option value="inventory">红豆 · 档期库存</option><option value="coverage">新云大数据 · 覆盖分析</option></select></label>
+      <label class="field"><span>默认媒体类型</span><select id="import-media"><option value="bus">公交车身</option><option value="metro">地铁出入口</option></select></label>
+      <div class="import-extra" id="import-inventory">
+        <label class="field"><span>查询起日</span><input id="import-start" type="date"></label>
+        <label class="field"><span>查询止日</span><input id="import-end" type="date"></label>
+        <label class="field"><span>导出日期</span><input id="import-checked" type="date"></label>
+      </div>
+      <div class="import-extra" id="import-coverage" hidden>
+        <label class="field"><span>默认圈选中心</span><select id="import-anchor"></select></label>
+        <label class="field"><span>默认圈选半径（米）</span><input id="import-radius" type="number" min="1"></label>
+      </div>
+      <label class="field full"><span>数据文件（.xlsx / .xls / .csv）</span><input id="import-file" type="file" accept=".xlsx,.xls,.csv" required></label>
+      <div class="full import-actions"><button type="button" class="button quiet" id="template">下载导入模板</button><button type="submit" class="button solid">校验并导入</button></div>
+      <p id="import-message" class="feedback full" role="status" hidden></p>
+    </form>
+    <div class="import-overview"><div id="source-counts"></div><a href="https://flairmedia.com.cn:881/" target="_blank" rel="noopener">红豆系统 ↗</a><a href="https://flairmedia.com.cn:38880/" target="_blank" rel="noopener">可视化平台 ↗</a></div>
+  </dialog>
+  <dialog id="row-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">资源明细</p><h2 id="row-heading"></h2></div><button type="button" class="button quiet" id="row-close">关闭</button></div>
+    <div id="row-body"></div>
+  </dialog>
+  <output id="toast" class="toast" role="status" hidden></output>
+  <script>/* BUILD: XLSX */</script>
+  <script>/* BUILD: LEDGER */</script>
+  <script>/* BUILD: CATALOG */</script>
+  <script>/* BUILD: PLANNER */</script>
+  <script>/* BUILD: FILES */</script>
+  <script>/* BUILD: APP */</script>
+</body>
+</html>
