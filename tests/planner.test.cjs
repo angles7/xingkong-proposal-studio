@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, '..');
 globalThis.XLSX = require('../vendor/xlsx.full.min.js');
 globalThis.XinyunLedger = require('../data/ledger.json');
 require('../src/catalog.js');
+require('../src/campaign.js');
 require('../src/planner.js');
 require('../src/files.js');
 
@@ -25,16 +26,35 @@ const geo = { type: 'bus', name: '136路', id: red.id, anchor: 'roastery', radiu
 test('all three budgets produce a bounded plan for each industry and media choice', () => {
   for (const brief of C.briefs) {
     for (const types of [['bus'], ['metro'], ['bus', 'metro']]) {
+      let previous = new Map();
       for (const budget of [1000000, 2000000, 5000000]) {
-        const plan = P.build({ ...options, brief: brief.id, budget, types }, noData);
+        const plan = P.build({ ...options, brief: brief.id, budget, types, reservePercent: 5 }, noData);
         assert.ok(plan.rows.length, JSON.stringify({ brief: brief.id, types, budget }));
-        assert.ok(plan.total <= budget);
+        assert.ok(plan.total + plan.reserve <= budget);
+        const next = new Map(plan.rows.map(row => [row.key, row.quantity]));
+        for (const [key, quantity] of previous) assert.ok(next.get(key) >= quantity, 'higher tier keeps earlier placements');
+        previous = next;
         assert.ok(plan.low <= plan.total && plan.total <= plan.high);
         assert.ok(plan.rows.every(row => row.quantity <= row.cap && row.quantity > 0 && types.includes(row.type)));
         assert.equal(plan.verified, 0);
+        assert.equal(plan.execution.install.reduce((sum, batch) => sum + batch.count, 0),
+          plan.breakdown.bus.count + plan.breakdown.metro.count);
       }
     }
   }
+});
+
+test('brief classification extracts explicit inputs and leaves ambiguous fields for review', () => {
+  const brief = XinyunCampaign.fromText('咖啡新品要做旗舰到店引流，200万，公交和地铁，2027年6月1日至2027年6月30日');
+  assert.equal(brief.brief, 'food');
+  assert.equal(brief.goal, '到店');
+  assert.equal(brief.budget, 2000000);
+  assert.deepEqual(brief.types, ['bus', 'metro']);
+  assert.deepEqual(brief.period, ['2027-06-01', '2027-06-30']);
+  const ambiguous = XinyunCampaign.fromText('100万或500万，公交不投，日期2027-02-29至2027-03-01');
+  assert.equal(ambiguous.budget, undefined);
+  assert.deepEqual(ambiguous.types, []);
+  assert.equal(ambiguous.period, null);
 });
 
 test('historical and partial evidence cannot verify a later booking', () => {
@@ -103,6 +123,18 @@ test('CSV and XLSX imports accept two source shapes and retain snapshot provenan
   assert.equal(actual.rows[0].evidence[0].distance, 130);
   assert.equal(F.mergeRows([red], [{ ...red, free: 0, checked: '2026-11-20' }], 'inventory')[0].free, 3);
   assert.throws(() => F.mergeRows([], [red, { ...red, free: 2 }], 'inventory'), /重复/);
+});
+
+test('platform coverage import expands multiple centers without reusing an aggregate distance', () => {
+  const csv = F.csv([
+    ['线路名称', '媒体类型', '覆盖中心点', '覆盖半径', '最近距离'],
+    ['95路', '公交线路', '上海新天地、南京西路789号', '500米', '273米'],
+    ['地铁13号线 - 南京西路', '地铁出入口', '南京西路789号', '500米', '189米'],
+  ]);
+  const { parsed, errors } = F.readRecords(Buffer.from(csv), 'coverage', {}, '平台测试.csv');
+  assert.deepEqual(errors, []);
+  assert.deepEqual(parsed.map(row => [row.type, row.anchor, row.distance, row.stationLevel]),
+    [['bus', 'xintiandi', null, false], ['bus', 'roastery', null, false], ['metro', 'roastery', 189, true]]);
 });
 
 test('workbook and CSV totals agree with the displayed proposal', () => {

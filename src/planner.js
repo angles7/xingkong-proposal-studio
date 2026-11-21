@@ -125,40 +125,74 @@
     return { candidates: [...enriched, ...bus, ...metro], evidence, dated };
   }
 
-  function allocate(candidates, options, zones, subwayShare) {
+  function allocate(candidates, options, zones, subwayShare, reservePercent) {
     const remaining = new Map(candidates.map(row => [row.key, row.cap]));
     const assigned = new Map();
+    const byStage = new Map();
     const frequency = new Map(zones.map(zone => [zone.id, 0]));
     const zoneWeights = new Map(zones.map(zone => [zone.id, zone.weight]));
-    let available = options.budget;
-    const reserve = { bus: options.budget, metro: options.budget };
-    if (options.types.length === 2) {
-      reserve.metro = Math.round(options.budget * subwayShare);
-      reserve.bus = options.budget - reserve.metro;
-    }
+    const spent = { bus: 0, metro: 0 };
     const score = row => {
       const quantity = assigned.get(row.key) || 0;
       const coverage = row.zoneIds.reduce((sum, id) => sum + zoneWeights.get(id) / Math.sqrt(1 + frequency.get(id)), 0);
-      const proof = row.evidence.length ? 1.25 : 1;
+      const proof = row.inventoryOK && hasExactCoverage(row) ? 1.3 : row.evidence.length ? 1.12 : 1;
       const grade = ({ S: 1.11, 'A++': 1.06 })[row.grade] || 1;
       return coverage * proof * grade / ((1 + quantity * .34) * Math.sqrt(row.cost.total / 50000));
     };
-    for (const split of [true, false]) {
-      for (;;) {
-        const eligible = candidates.filter(row => remaining.get(row.key) > 0 && row.cost.total <= available
-          && (!split || row.cost.total <= reserve[row.type]));
-        // A stable key resolves ties so repeated runs with the same inputs agree.
-        const winner = eligible.sort((a, b) => score(b) - score(a) || a.key.localeCompare(b.key, 'zh-CN'))[0];
-        if (!winner) break;
-        available -= winner.cost.total;
-        reserve[winner.type] -= winner.cost.total;
-        remaining.set(winner.key, remaining.get(winner.key) - 1);
-        assigned.set(winner.key, (assigned.get(winner.key) || 0) + 1);
-        for (const id of winner.zoneIds) frequency.set(id, frequency.get(id) + 1);
+    const stages = [1000000, 2000000, 5000000].filter(budget => budget < options.budget).concat(options.budget);
+    for (const tier of stages) {
+      const cap = tier - Math.round(tier * reservePercent / 100);
+      const subwayCap = options.types.length === 2 ? Math.round(cap * subwayShare) : cap;
+      const caps = { bus: options.types.length === 2 ? cap - subwayCap : cap, metro: subwayCap };
+      const module = tier <= 1000000 ? '核心' : tier <= 2000000 ? '补频' : '扩展';
+      for (const split of [true, false]) {
+        for (;;) {
+          const available = cap - spent.bus - spent.metro;
+          const eligible = candidates.filter(row => remaining.get(row.key) > 0 && row.cost.total <= available
+            && (!split || row.cost.total <= caps[row.type] - spent[row.type]));
+          const winner = eligible.sort((a, b) => score(b) - score(a) || a.key.localeCompare(b.key, 'zh-CN'))[0];
+          if (!winner) break;
+          spent[winner.type] += winner.cost.total;
+          remaining.set(winner.key, remaining.get(winner.key) - 1);
+          assigned.set(winner.key, (assigned.get(winner.key) || 0) + 1);
+          if (!byStage.has(winner.key)) byStage.set(winner.key, {});
+          const placement = byStage.get(winner.key);
+          placement[module] = (placement[module] || 0) + 1;
+          for (const id of winner.zoneIds) frequency.set(id, frequency.get(id) + 1);
+        }
       }
     }
     const ordered = new Map(candidates.map(row => [row.key, row]));
-    return [...assigned].map(([key, quantity]) => ({ ...ordered.get(key), quantity }));
+    return [...assigned].map(([key, quantity]) => ({ ...ordered.get(key), quantity, modules: byStage.get(key) }));
+  }
+
+  function schedule(options, breakdown) {
+    const busPerNight = options.busPerNight ?? 12;
+    const metroPerNight = options.metroPerNight ?? 4;
+    const buffer = options.weatherNights ?? 2;
+    if (![busPerNight, metroPerNight, buffer].every(value => Number.isSafeInteger(value) && value > 0 && value <= 30)) {
+      throw new Error('夜间施工容量和天气缓冲需为 1–30 的整数。');
+    }
+    const bus = Math.ceil(breakdown.bus.count / busPerNight);
+    const metro = Math.ceil(breakdown.metro.count / metroPerNight);
+    const nights = bus + metro;
+    const dates = Array.from({ length: nights }, (_, index) => shiftDay(options.start, -buffer - nights + index));
+    const install = dates.map((day, index) => {
+      const type = index < bus ? 'bus' : 'metro';
+      const sequence = type === 'bus' ? index : index - bus;
+      const capacity = type === 'bus' ? busPerNight : metroPerNight;
+      return { day, type, count: Math.min(capacity, breakdown[type].count - sequence * capacity) };
+    });
+    const first = dates[0] || options.start;
+    const monitoring = '逐车、逐点匹配上刊照片与发布时间；下刊复拍并在结案报告附差异和补刊记录。';
+    return { bus, metro, buffer, install, busPerNight, metroPerNight, monitoring,
+      timeline: [
+        ['定稿与内容审核', shiftDay(first, -10), '确认分圈素材和二维码，完成客户及行业审核'],
+        ['制作与进场确认', shiftDay(first, -5), '复核车型、点位面积与夜间进场条件，协调施工班组'],
+        ['分批上刊', first, nights ? '至 ' + dates.at(-1) + '，按夜分批施工。雨天停工，预留 ' + buffer + ' 个机动夜' : '施工窗口随媒体组合确定'],
+        ['发布与监测', options.start, '按资源编码核对画面、位置和发布起日，提交上刊照片'],
+        ['分批下刊与结案', shiftDay(options.end, 1), '从末刊次夜起按班组窗口拆批，提交下刊照片、结案报告与补刊记录'],
+      ] };
   }
 
   function build(options, data) {
@@ -166,9 +200,16 @@
     if (!Number.isInteger(options.budget) || options.budget < 1000000 || options.budget > 5000000) throw new Error('预算须在 100–500 万元之间。');
     if (!options.types.length) throw new Error('请至少选一种媒体。');
     if (!(options.discount > 0 && options.discount <= 100)) throw new Error('折扣须大于 0 且不超过 100%。');
+    const reservePercent = options.reservePercent ?? 0;
+    if (!(reservePercent >= 0 && reservePercent <= 20)) throw new Error('执行预留比例须在 0–20% 之间。');
     const brief = catalog.briefs.find(item => item.id === options.brief);
     if (!brief) throw new Error('请选择行业。');
-    const zones = brief.zones.map(id => catalog.locations[id]);
+    const strategy = globalThis.XinyunCampaign.strategy(brief, options.goal);
+    const zones = brief.zones.map(id => {
+      const zone = catalog.locations[id];
+      return { ...zone, weight: zone.weight * (strategy.contexts.test(zone.purpose) ? 1.2 : 1) };
+    });
+    const share = Math.min(.75, Math.max(.2, brief.subwayShare + strategy.media));
     const months = billingMonths(options.start, options.end);
     const { candidates, evidence, dated } = candidatePool(options, data, zones);
     const excluded = new Set(options.excluded || []);
@@ -184,10 +225,12 @@
       priced.push({ ...row, cost });
     }
     const eligible = priced.filter(row => !excluded.has(row.key));
-    const rows = allocate(eligible, options, zones, brief.subwayShare);
+    const rows = allocate(eligible, options, zones, share, reservePercent);
     const breakdown = Object.fromEntries(Object.keys(media).map(type => {
       const items = rows.filter(row => row.type === type);
       return [type, { count: items.reduce((n, row) => n + row.quantity, 0),
+        release: items.reduce((n, row) => n + row.quantity * row.cost.release, 0),
+        make: items.reduce((n, row) => n + row.quantity * row.cost.make, 0),
         cost: items.reduce((n, row) => n + row.quantity * row.cost.total, 0) }];
     }));
     const total = breakdown.bus.cost + breakdown.metro.cost;
@@ -197,19 +240,21 @@
     const alternatives = eligible.filter(row => !used.has(row.key))
       .sort((a, b) => Number(Boolean(b.evidence.length)) - Number(Boolean(a.evidence.length))
         || b.zoneIds.length - a.zoneIds.length || a.cost.total - b.cost.total);
-    return { options, brief, zones, months, rows, breakdown, total, covered, verified, alternatives,
+    const execution = schedule(options, breakdown);
+    const reserve = Math.round(options.budget * reservePercent / 100);
+    const days = Math.round((Date.parse(options.end) - Date.parse(options.start)) / dayMs) + 1;
+    const crossMedia = zones.filter(zone => options.types.every(type => rows.some(row => row.type === type && row.zoneIds.includes(zone.id)))).map(zone => zone.id);
+    const withinStock = rows.every(row => row.quantity <= row.cap && row.cap > 0);
+    const fullyChecked = rows.length > 0 && verified === rows.length;
+    return { options, brief, strategy, zones, months, rows, breakdown, total, covered, verified, alternatives, share,
+      reserve, execution, days, crossMedia,
+      audit: { withinStock, withinBudget: total + reserve <= options.budget, fullyChecked, priced: rows.every(row => row.cost.total > 0) },
       low: rows.reduce((n, row) => n + row.quantity * row.cost.low, 0),
       high: rows.reduce((n, row) => n + row.quantity * row.cost.high, 0),
       counts: { dated: dated.length, evidence: evidence.length, joined: candidates.filter(row => row.inventoryOK && hasExactCoverage(row)).length,
         missingPrice: missingPrice.length, available: eligible.length },
       missingPrice,
-      timeline: [
-        ['定稿与内容审核', shiftDay(options.start, -15), '确认门店、素材与落地页，走内容及行业审核'],
-        ['制作与进场确认', shiftDay(options.start, -9), '复核车型、实际点位面积与夜间窗口，按容量分批排班'],
-        ['分批安装', shiftDay(options.start, -5), '预留天气与临时管控缓冲，开档前完成安装'],
-        ['发布与监测', options.start, '上刊后核对线路、数量、日期及画面，监拍交付以协议约定为准'],
-        ['下刊与结案', shiftDay(options.end, 1), '汇总上下刊照片、异常与补刊记录，按合同验收'],
-      ],
+      timeline: execution.timeline,
     };
   }
 

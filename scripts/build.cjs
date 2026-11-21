@@ -8,10 +8,12 @@ const seedPath = path.join(root, 'data', 'verified.local.json');
 const seed = fs.existsSync(seedPath) ? JSON.parse(fs.readFileSync(seedPath, 'utf8')) : { inventory: [], coverage: [] };
 const slots = {
   CSS: read('src/style.css'),
+  HERO_IMAGE: 'data:image/jpeg;base64,' + fs.readFileSync(path.join(root, 'src/assets/shanghai-skyline.jpg')).toString('base64'),
   XLSX: read('vendor/xlsx.full.min.js'),
   LEDGER: 'globalThis.XinyunLedger = ' + asScript(JSON.parse(read('data/ledger.json')))
     + ';\nglobalThis.XinyunSeed = ' + asScript(seed) + ';',
   CATALOG: read('src/catalog.js'),
+  CAMPAIGN: read('src/campaign.js'),
   PLANNER: read('src/planner.js'),
   FILES: read('src/files.js'),
   APP: read('src/app.js'),

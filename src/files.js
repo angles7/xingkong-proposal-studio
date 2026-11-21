@@ -85,11 +85,12 @@
         let name = clean(col('name'));
         const id = clean(col('id'));
         if ((!name && !id) || /^(合计|总计|小计|说明)$/.test(name)) continue;
-        const rowType = clean(col('type'));
+        const format = clean(col('format'));
+        const rowType = clean(col('type')) || (kind === 'coverage' && typeOf(format) ? format : '');
         const type = rowType ? typeOf(rowType) : defaults.type;
         const exit = clean(col('exit'));
         if (type === 'metro' && exit && name && !name.endsWith(exit)) name += exit;
-        const common = { id, name, type, format: clean(col('format')), operator: clean(col('operator')), source };
+        const common = { id, name, type, format: rowType === format ? '' : format, operator: clean(col('operator')), source };
         try {
           if (!type || !name) throw new Error('缺少媒体类型或线路/点位名称');
           if (kind === 'inventory') {
@@ -102,17 +103,21 @@
             if (!Number.isSafeInteger(free) || free > 10000) throw new Error('需要整数空车数');
             parsed.push({ ...common, start, end, checked, grade, free, area: numeric(col('area')) });
           } else {
-            const locations = globalThis.XinyunCatalog.locations;
-            const value = P.identity(col('anchor') || defaults.anchor);
-            const anchor = locations[value] || Object.values(locations).find(zone => [zone.id, zone.name].some(item => P.identity(item) === value));
+            const { locations, locationAliases } = globalThis.XinyunCatalog;
+            const centers = clean(col('anchor') || defaults.anchor).split(/[、;；,，\n]+/).map(P.identity).filter(Boolean);
+            const anchors = [...new Set(centers.map(value => locations[value] || locations[locationAliases[value]]
+              || Object.values(locations).find(zone => P.identity(zone.name) === value)).filter(Boolean))];
             const radius = numeric(col('radius') || defaults.radius);
             const distance = numeric(col('distance'));
-            if (!anchor || !radius || (distance !== null && distance > radius)) throw new Error('请选择有效圈选中心和半径，距离不得超过半径');
-            const rawMonth = date(col('month'));
+            if (!anchors.length || !radius || (distance !== null && distance > radius)) throw new Error('请选择有效圈选中心和半径，距离不得超过半径');
+            if (centers.length > anchors.length) errors.push(sheetName + ' 行 ' + (index + 1) + ' · 部分圈选中心未匹配');
+            const rawMonth = date(col('month')).replace(/^(2023)年(\d{1,2})月$/, '$1-$2');
             const month = /^2023-(0?[1-9]|1[0-2])(?:-\d{2})?$/.test(rawMonth) ? '2023-' + rawMonth.split('-')[1].padStart(2, '0') : '';
             const metric = clean(col('metric'));
             const footfall = month && metric ? numeric(col('footfall')) : null;
-            parsed.push({ ...common, anchor: anchor.id, radius, distance, footfall, month, metric, ai: usableLink(col('ai')) });
+            const stationLevel = type === 'metro' && !(/^(?:SHDT-)/i.test(id) || /\d[A-Za-z]?号(?:口|出入口)|出口[A-Za-z0-9]/.test(name));
+            for (const anchor of anchors) parsed.push({ ...common, anchor: anchor.id, radius, distance: centers.length === 1 ? distance : null,
+              footfall, month, metric, stationLevel, ai: usableLink(col('ai')) });
           }
         } catch (error) { errors.push(sheetName + ' 行 ' + (index + 1) + ' · ' + error.message); }
       }
@@ -151,7 +156,7 @@
       ['客户', '行业', '媒体', '线路/点位', '等级', '形式', '媒体单位', '数量', '开始日期', '结束日期', '计费月',
         '刊例低位/单位月', '刊例高位/单位月', '刊例测算/单位月', '折扣%', '制作费/单位', '发布费小计', '制作费小计',
         '报价小计', '区间低位', '区间高位', '数量依据', '圈选地标', '覆盖来源', '库存来源', '库存快照日期', '计价来源',
-        '资源ID', '地铁面积㎡', '库存查询开始', '库存查询结束', '资源状态', '地铁面积依据'],
+        '资源ID', '地铁面积㎡', '库存查询开始', '库存查询结束', '资源状态', '地铁面积依据', '预算模块'],
       ...rows.map(row => {
         const q = row.quantity;
         const c = row.cost;
@@ -164,7 +169,8 @@
           row.source, row.checked, c.label, row.id || '', row.area || '', row.start || '', row.end || '',
           row.inventoryOK && P.hasExactCoverage(row) && !row.areaAssumed ? '档期与覆盖已匹配'
             : row.inventoryOK ? '档期有快照 · 覆盖或计价待核' : '待核验',
-          row.area ? (row.areaAssumed ? '测算假设' : '导入的点位面积') : ''];
+          row.area ? (row.areaAssumed ? '测算假设' : '导入的点位面积') : '',
+          Object.entries(row.modules).map(([label, count]) => label + ' ' + count).join(' / ')];
       }),
     ];
   }
@@ -194,20 +200,22 @@
       ['媒体', options.types.map(type => media[type]).join(' + ')], ['折扣（仅发布费）%', options.discount],
       ['计价情景', ({ low: '低位', mid: '中值', high: '高位' })[options.priceMode]],
       ['公交数量（辆）', breakdown.bus.count], ['地铁数量（处）', breakdown.metro.count],
-      ['预算测算合计（元）', plan.total], ['预算余量（元）', options.budget - plan.total],
+      ['发布及制作合计（元）', plan.total], ['预算可用余量（元）', options.budget - plan.total - plan.reserve],
       ['全案低位（元）', plan.low], ['全案高位（元）', plan.high],
-      ['档期状态', source], ['策略', brief.idea], ['受众', brief.audience], ['承接动作', brief.action],
-      ['效果监测', brief.measure], ['计价范围', '仅发布及制作，税费、上刊施工及其他费用以最终确认口径为准'],
+      ['档期状态', source], ['生意目标', plan.strategy.business], ['Campaign 主目标', plan.strategy.goal], ['策略', brief.idea],
+      ['受众', brief.audience], ['承接动作', brief.action], ['效果监测', plan.strategy.measure],
+      ['执行预留（元）', plan.reserve], ['计价范围', '发布、制作与执行预留按本方案口径列示，税费及实际施工费用以最终确认口径为准'],
       ['公交参考', '01 公交媒体台账（2026-11-13 单日）'], ['刊例口径', '07 媒体刊例价（脱敏区间）'],
     ];
-    for (const [label, url] of brief.sources) summary.push([label, url]);
     XLSX.utils.book_append_sheet(file, sheet(summary, [30, 79]), '方案摘要');
     const details = planRows(plan).map((row, index) => index ? row.map((value, col) => [8, 9, 25, 29, 30].includes(col) && value ? new Date(value) : value) : row);
     const detailSheet = sheet(details, details[0].map((_, index) => [3, 22, 23, 24, 26, 31].includes(index) ? 30 : 18));
     detailSheet['!autofilter'] = { ref: detailSheet['!ref'] };
     XLSX.utils.book_append_sheet(file, detailSheet, '媒介明细');
-    XLSX.utils.book_append_sheet(file, sheet([['阶段', '建议日期', '工作与交付'], ...timeline.map(([step, day, note]) => [step, new Date(day), note])],
-      [24, 18, 69]), '排期与监测');
+    XLSX.utils.book_append_sheet(file, sheet([['阶段', '建议日期', '工作与交付'],
+      ...timeline.map(([step, day, note]) => [step, new Date(day), note]),
+      ...plan.execution.install.map(item => ['上刊批次', new Date(item.day), media[item.type] + ' ' + item.count + (item.type === 'bus' ? ' 辆' : ' 处')])],
+      [24, 18, 86]), '排期与监测');
     XLSX.utils.book_append_sheet(file, sheet([
       ['圈选中心', '位置', '建议半径（米）', '场景', '关联资源数', '已匹配核验资源数'],
       ...plan.zones.map(zone => [zone.name, zone.address, zone.radius, zone.purpose,
